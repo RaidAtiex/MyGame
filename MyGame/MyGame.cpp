@@ -1,10 +1,10 @@
-﻿#include <SFML/Graphics.hpp>
+#include <SFML/Graphics.hpp>
 #include <iostream>
 #include <vector>
 #include <algorithm>
 #include <fstream>
 #include <cctype>
-
+#include <algorithm>
 
 using namespace sf;
 using namespace std;
@@ -122,7 +122,36 @@ public:
 
 
     };
+    class theText {
+    public:
+        
+        sf::Font font;
+        Text txt;
+       
 
+        theText() {
+            
+           
+            sf::Text text("", font, 0);
+            font.loadFromFile("fonts\\arial.ttf");
+            text.setFillColor(sf::Color::White);
+            
+            txt = text;
+            
+
+        }
+        void setText(string thestr) {
+            txt.setString(thestr);
+        }
+        void toPos(int x, int y) {
+            txt.setPosition(x, y);
+        }
+        void setSize(int s) {
+            txt.setCharacterSize(s);
+        }
+
+       
+    };
 
 
 
@@ -143,7 +172,7 @@ public:
             sp.setTexture(tx1);
         }
         void toPos(int x, int y) {
-            sp.setPosition(x, y);
+            sp.setPosition(x, y );
         }
 
     };
@@ -162,7 +191,9 @@ public:
     signpost sgn;
     flag fl1;
     flag fl2;
-
+    theText tx;
+    std::vector<Text> texts;
+    
 
     void drawobj(Sprite spr) {
         w.draw(spr);
@@ -224,6 +255,15 @@ public:
                 //drawobj(spwn.sp);
 
             }
+            else if (line.substr(0, 4) == "Text") {
+                
+                tx.toPos(a(line)[0], a(line)[1]);
+                tx.setSize(a(line)[2]);
+                tx.setText(gettext(line));
+
+                texts.push_back(tx.txt);
+
+            }
 
 
 
@@ -247,6 +287,26 @@ public:
             nums.push_back(std::stoi(numStr));
         }
         return nums;
+    }
+
+    std::string gettext(std::string a) {
+        std::string b;
+        bool start = false;
+        bool end = false;
+        for (int i = 0; i < a.size(); i++) {
+            if (a[i] == '@' && start == false && end == false) {
+                start = true;
+                i += 1; // Пропустить кавычку
+            }
+            if (a[i] == '@' && start == true && end == false) {
+                end = true;
+                start = false;
+            }
+            else if (start == true && end == false) {
+                b += a[i];
+            }
+        }
+        return b;
     }
 
 
@@ -290,7 +350,7 @@ public:
             states[1] = 1;
             states[2] = 0;
             states[3] = 0;
-            std::cout << 3;
+           // std::cout << 3;
             sp.setPosition(sp.getPosition().x - 16, sp.getPosition().y - 8);
 
             sf::sleep(sf::seconds(1.f));
@@ -300,7 +360,7 @@ public:
             states[1] = 0;
             states[2] = 0;
             states[3] = 0;
-            std::cout << 3;
+            //std::cout << 3;
             sp.setPosition(sp.getPosition().x + 16, sp.getPosition().y + 8);
 
             sf::sleep(sf::seconds(1.f));
@@ -311,7 +371,7 @@ public:
             states[1] = 0;
             states[2] = 0;
             states[3] = 0;
-            std::cout << 1;
+            //std::cout << 1;
             sp.setPosition(sp.getPosition().x + 16, sp.getPosition().y + 8);
 
 
@@ -322,7 +382,7 @@ public:
             states[1] = 1;
             states[2] = 0;
             states[3] = 0;
-            std::cout << 2;
+           // std::cout << 2;
             sp.setPosition(sp.getPosition().x - 16, sp.getPosition().y - 8);
 
 
@@ -334,7 +394,7 @@ public:
             states[1] = 0;
             states[2] = 1;
             states[3] = 0;
-            std::cout << 3;
+            //std::cout << 3;
             sp.setPosition(sp.getPosition().x + 16, sp.getPosition().y - 8);
 
             sf::sleep(sf::seconds(1.f));
@@ -345,14 +405,15 @@ public:
             states[1] = 0;
             states[2] = 0;
             states[3] = 1;
-            std::cout << 4;
+            //std::cout << 4;
             sp.setPosition(sp.getPosition().x - 16, sp.getPosition().y + 8);
 
             sf::sleep(sf::seconds(1.f));
         }
-        else if (sf::Vector2f(sp.getPosition().x - 16, sp.getPosition().y + 8) == ps || Vector2f(sp.getPosition().x - 16, sp.getPosition().y - 8) == ps || Vector2f(sp.getPosition().x + 16, sp.getPosition().y - 8) == ps || Vector2f(sp.getPosition().x - 16, sp.getPosition().y + 8) == ps)
+        else if (sf::Vector2f(sp.getPosition().x + 32, sp.getPosition().y) == ps || Vector2f(sp.getPosition().x, sp.getPosition().y + 16) == ps || Vector2f(sp.getPosition().x, sp.getPosition().y) == ps || Vector2f(sp.getPosition().x + 32, sp.getPosition().y + 16) == ps)
         {
             end = true;
+            
 
         }
 
@@ -368,8 +429,17 @@ public:
 
 };
 
+
+
+
+
 int main()
 {
+    
+    
+
+    bool isrestart = false;
+   
     int click = 0;
     bool bg = false;
 
@@ -401,7 +471,7 @@ int main()
 
 
     Map map(window, texture, size, 15, 15);
-    LevelGenerator lg("generator.txt", window);
+    LevelGenerator lg("LevelGenerator\\generator.txt", window);
 
     Sprite sp2, sp3;
     sp2.setTexture(texture3);
@@ -416,17 +486,13 @@ int main()
     // Главный цикл приложения
     while (window.isOpen())
     {
+        
 
         if (tr.end == true && tr1.end == true) {
-            if (sf::Vector2f(tr.sp.getPosition().x - 16, tr.sp.getPosition().y + 8) == lg.fl1.sp.getPosition() || Vector2f(tr.sp.getPosition().x - 16, tr.sp.getPosition().y - 8) == lg.fl1.sp.getPosition() || Vector2f(tr.sp.getPosition().x + 16, tr.sp.getPosition().y - 8) == lg.fl1.sp.getPosition() || Vector2f(tr.sp.getPosition().x - 16, tr.sp.getPosition().y + 8) == lg.fl1.sp.getPosition())
-            {
-                if (sf::Vector2f(tr1.sp.getPosition().x - 16, tr1.sp.getPosition().y + 8) == lg.fl2.sp.getPosition() || Vector2f(tr1.sp.getPosition().x - 16, tr1.sp.getPosition().y - 8) == lg.fl2.sp.getPosition() || Vector2f(tr1.sp.getPosition().x + 16, tr1.sp.getPosition().y - 8) == lg.fl2.sp.getPosition() || Vector2f(tr1.sp.getPosition().x - 16, tr1.sp.getPosition().y + 8) == lg.fl2.sp.getPosition())
-                {
-                    std::cout << "WIN";
+          
+            std::cout << "WIN" << endl;
 
-                }
-
-            }
+             
         }
         Vector2i vect = Mouse::getPosition(window);
         sf::Vector2f mousePosition = sf::Vector2f(sf::Mouse::getPosition(window));
@@ -455,7 +521,12 @@ int main()
         {
             if (event.type == sf::Event::Closed)
             {
+
                 window.close();
+            }
+            if (isrestart == true) {
+                window.close();
+                main();
             }
             else if (event.type == sf::Event::KeyPressed)
             {
@@ -479,6 +550,13 @@ int main()
 
 
 
+
+                }
+                if (event.key.code == sf::Keyboard::R)
+                {
+                    
+                    isrestart = true;
+                    
 
                 }
             }
@@ -525,6 +603,38 @@ int main()
                     std::cout << "X " << sp3.getPosition().x << " Y  " << sp3.getPosition().y << endl;
 
                 }
+                else  if (event.mouseButton.button == sf::Mouse::Right)
+                {
+
+                    
+                   
+                    for (int i = 0; i < (map.sprites.size()); i++) {
+
+                        if (Vector2f(map.sprites[i].getPosition().x, map.sprites[i].getPosition().y) == sp3.getPosition() && i > (map.X - 1) * (map.Y - 1)) {
+                           // std::cout << 1;
+                            
+                            map.sprites[i].setPosition(-100, -100);
+
+                            for (int j = 0; j < RilsesPos.size(); j++) {
+                                if (RilsesPos[j] == sp3.getPosition()) {
+                                    auto it = std::find(RilsesPos.begin(), RilsesPos.end(), RilsesPos[j]);
+                                    RilsesPos.erase(std::remove(RilsesPos.begin(), RilsesPos.end(), RilsesPos[j]));
+                                    //std::cout << 1;
+                                }
+                            }
+                        }
+
+
+                       
+
+
+                    }
+
+
+
+
+
+                    }
             }
 
         }
@@ -568,9 +678,15 @@ int main()
 
         }
 
+        for (auto i :lg.texts) {
+            window.draw(i);
+        }
+       
+        
 
 
         window.draw(sp3);
+      
 
 
         //window.draw(sp3);
